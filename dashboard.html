@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบวิเคราะห์ข้อมูลการขายอัจฉริยะ | Amazon Quick Workshop</title>
+  <link rel="stylesheet" href="style.css?v=8">
+</head>
+<body>
+
+  <!-- Top Educational Notice Banner -->
+  <div class="edu-banner">
+    <span>⚠️ <strong>ข้อมูลจำลองเพื่อการเรียนรู้ (Simulated Data for Educational Purpose)</strong></span>
+    <span class="badge">Amazon Quick Workshop</span>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="brand-icon">☕</div>
+        <div class="brand-info">
+          <h1>ระบบวิเคราะห์ข้อมูลการขายอัจฉริยะ <span style="font-size: 0.8rem; font-weight: 500; color: var(--primary-orange);">v3.0 Pro</span></h1>
+          <p>แดชบอร์ดติดตามรายได้ กำไร และพฤติกรรมการขาย (ข้อมูลชีต Sales • 1–31 ส.ค. 2569)</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnOpenDataManager" class="btn btn-primary btn-sm" onclick="switchTab('tabDataManager')" title="นำเข้าข้อมูลใหม่ หรือจัดการตัดลบข้อมูลเก่า">
+          📁 นำเข้า/จัดการข้อมูล
+        </button>
+        <button id="btnAuditReport" class="btn btn-audit btn-sm" title="ดูผลการตรวจความสมบูรณ์ของข้อมูล">
+          🛡️ ตรวจข้อมูล: สมบูรณ์ 100%
+        </button>
+        <button id="btnThemeToggle" class="btn btn-outline btn-sm">
+          🌙 สลับธีม
+        </button>
+        <button id="btnPrint" class="btn btn-outline btn-sm">
+          🖨️ พิมพ์รายงาน
+        </button>
+        <button id="btnDownloadCSV" class="btn btn-orange btn-sm">
+          📥 ดาวน์โหลด CSV
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Compact Filter Section with Smooth Slide Accordion -->
+    <section class="filter-section" id="filterSection">
+      <div class="filter-header" id="filterHeader" onclick="handleFilterHeaderClick(event)" tabindex="0" role="button" aria-expanded="true" aria-controls="filterCollapsibleWrapper" title="คลิกเพื่อกดเก็บหรือเปิดเลื่อนตัวกรอง">
+        <div class="filter-title-group">
+          <div class="filter-title">
+            <span>🔍 ตัวกรองข้อมูลขั้นสูง <span class="filter-subtitle">(Interactive Multi-Select Filters)</span></span>
+            <span id="filterRowCountBadge" class="filter-stats">กำลังแสดง 100/100 รายการ (100%)</span>
+          </div>
+          <span id="filterSummaryBar" class="filter-summary-chip">ทุกสาขา • ทุกหมวด • ทุกวัน • 8 สินค้า • 1–31 ส.ค. 69</span>
+        </div>
+        <div class="filter-header-actions" onclick="event.stopPropagation();">
+          <button id="btnResetFilters" class="btn btn-outline btn-xs" title="รีเซ็ตตัวกรองทั้งหมดเป็นค่าเริ่มต้น">
+            ↺ ล้างตัวกรองทั้งหมด
+          </button>
+          <button id="btnToggleFilters" class="btn btn-outline btn-xs btn-toggle-filter" onclick="toggleFilterPanel()" title="กดเก็บหรือเปิดเลื่อนตัวกรอง">
+            <span class="toggle-icon">▲</span> <span class="toggle-text">ซ่อนตัวกรอง (กดเก็บ)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-collapsible-wrapper" id="filterCollapsibleWrapper">
+        <div class="filter-collapsible-inner" id="filterPanelBody">
+          <div class="filter-grid">
+            <!-- Branch Filter -->
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>สาขา (Branch)</span>
+                <div class="filter-quick-btns">
+                  <button class="date-preset-btn" onclick="quickSelectFilter('branch', true)">ทั้งหมด</button>
+                  <button class="date-preset-btn" onclick="quickSelectFilter('branch', false)">ล้าง</button>
+                </div>
+              </div>
+              <div class="filter-pills" id="branchFilterPills"></div>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>หมวดหมู่ (Category)</span>
+                <div class="filter-quick-btns">
+                  <button class="date-preset-btn" onclick="quickSelectFilter('category', true)">ทั้งหมด</button>
+                  <button class="date-preset-btn" onclick="quickSelectFilter('category', false)">ล้าง</button>
+                </div>
+              </div>
+              <div class="filter-pills" id="categoryFilterPills"></div>
+            </div>
+
+            <!-- Day of Week Filter -->
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>วันในสัปดาห์ (Day)</span>
+                <div class="filter-quick-btns">
+                  <button class="date-preset-btn" onclick="setDowPreset('all')">ทั้งหมด</button>
+                  <button class="date-preset-btn" onclick="setDowPreset('weekday')">จ.-ศ.</button>
+                  <button class="date-preset-btn" onclick="setDowPreset('weekend')">ส.-อา.</button>
+                </div>
+              </div>
+              <div class="filter-pills" id="dowFilterPills"></div>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>ช่วงวันที่ (Date Range)</span>
+                <div class="filter-quick-btns">
+                  <button class="date-preset-btn" onclick="setDatePreset('all')">ทั้งเดือน</button>
+                </div>
+              </div>
+              <div class="date-inputs">
+                <input type="date" id="filterStartDate" min="2026-08-01" max="2026-08-31" value="2026-08-01">
+                <span style="color: var(--text-muted); font-size: 0.72rem;">-</span>
+                <input type="date" id="filterEndDate" min="2026-08-01" max="2026-08-31" value="2026-08-31">
+              </div>
+              <div class="date-presets">
+                <button class="date-preset-btn" onclick="setDatePreset('w1')">สัปดาห์ 1</button>
+                <button class="date-preset-btn" onclick="setDatePreset('w2')">สัปดาห์ 2</button>
+                <button class="date-preset-btn" onclick="setDatePreset('w3')">สัปดาห์ 3</button>
+                <button class="date-preset-btn" onclick="setDatePreset('w4')">สัปดาห์ 4+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Product Multi-select Inline Row -->
+          <div class="filter-product-row">
+            <div class="filter-label" style="min-width: 140px; margin-bottom: 0;">
+              <span>สินค้า (Product)</span>
+              <div class="filter-quick-btns">
+                <button class="date-preset-btn" onclick="quickSelectFilter('product', true)">ทั้งหมด (8)</button>
+                <button class="date-preset-btn" onclick="quickSelectFilter('product', false)">ล้าง</button>
+              </div>
+            </div>
+            <div class="filter-pills filter-pills-compact" id="productFilterPills"></div>
+          </div>
+
+          <!-- Active Filters Tag Bar -->
+          <div class="active-filters-bar" id="activeFiltersBar" style="display: none;">
+            <span style="font-weight: 700; color: var(--text-muted); font-size: 0.72rem;">ตัวกรองที่ใช้งาน:</span>
+            <div id="activeFilterTags" style="display: flex; flex-wrap: wrap; gap: 4px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Global Metric Switcher & Navigation Controls -->
+    <div class="metric-control-bar">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">ตัวชี้วัดของกราฟ (Metric):</span>
+        <div class="metric-switch">
+          <button class="metric-btn active" data-metric="revenue" onclick="setGlobalMetric('revenue')">
+            💰 รายได้ (฿)
+          </button>
+          <button class="metric-btn" data-metric="gross_profit" onclick="setGlobalMetric('gross_profit')">
+            📈 กำไรขั้นต้น (฿)
+          </button>
+          <button class="metric-btn" data-metric="qty" onclick="setGlobalMetric('qty')">
+            📦 จำนวนหน่วย (ชิ้น)
+          </button>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn btn-outline btn-sm" onclick="toggleSimulator()">
+          💡 แบบจำลองกำไร (What-If Simulator)
+        </button>
+      </div>
+    </div>
+
+    <!-- What-If Simulator Panel (Collapsible) -->
+    <section class="simulator-box" id="simulatorSection" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="font-weight: 700; font-size: 1rem; color: var(--primary-orange);">
+          🎯 แบบจำลองสถานการณ์ราคาและต้นทุน (What-If Profit Simulator)
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="resetSimulator()">รีเซ็ตแบบจำลอง</button>
+      </div>
+      <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px;">
+        ทดลองปรับเปอร์เซ็นต์ราคาขายเฉลี่ยหรือต้นทุนต่อหน่วย เพื่อพยากรณ์ผลกระทบต่อกำไรขั้นต้นจากชุดข้อมูลที่กำลังเลือก
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+        <div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>ปรับราคาขายต่อหน่วย:</span>
+              <span id="simPriceVal" style="color: var(--primary-blue);">0%</span>
+            </div>
+            <input type="range" id="simPriceSlider" min="-20" max="20" value="0" step="1" oninput="updateSimulation()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>ปรับต้นทุนต่อหน่วย:</span>
+              <span id="simCostVal" style="color: var(--primary-orange);">0%</span>
+            </div>
+            <input type="range" id="simCostSlider" min="-20" max="20" value="0" step="1" oninput="updateSimulation()">
+          </div>
+        </div>
+        <div style="background: var(--bg-card-subtle); padding: 14px; border-radius: var(--radius-md); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">รายได้พยากรณ์</div>
+            <div id="simProjRevenue" style="font-size: 1.15rem; font-weight: 800;">฿0</div>
+          </div>
+          <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">กำไรขั้นต้นพยากรณ์</div>
+            <div id="simProjProfit" style="font-size: 1.15rem; font-weight: 800; color: var(--accent-emerald);">฿0</div>
+          </div>
+          <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">อัตรากำไรพยากรณ์</div>
+            <div id="simProjMargin" style="font-size: 1.15rem; font-weight: 800;">0%</div>
+          </div>
+          <div>
+            <div style="font-size: 0.76rem; color: var(--text-muted);">ผลต่างกำไร (Delta)</div>
+            <div id="simDeltaProfit" style="font-size: 1.15rem; font-weight: 800;">±฿0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav" id="mainTabsNav">
+      <button class="tab-btn active" data-tab="tabOverview" onclick="switchTab('tabOverview')">
+        📊 ภาพรวม (Overview)
+      </button>
+      <button class="tab-btn" data-tab="tabBranches" onclick="switchTab('tabBranches')">
+        🏢 สาขา (Branches & Heatmap)
+      </button>
+      <button class="tab-btn" data-tab="tabProducts" onclick="switchTab('tabProducts')">
+        ☕ สินค้า & ABC (Pareto & Matrix)
+      </button>
+      <button class="tab-btn" data-tab="tabTrends" onclick="switchTab('tabTrends')">
+        📅 มิติเวลา (Time Trends & Calendar)
+      </button>
+      <button class="tab-btn" data-tab="tabTransactions" onclick="switchTab('tabTransactions')">
+        📑 รายการขาย (Transactions)
+      </button>
+      <button class="tab-btn" data-tab="tabDataManager" onclick="switchTab('tabDataManager')">
+        📁 จัดการ & นำเข้าข้อมูล (Data Manager)
+      </button>
+    </nav>
+
+    <!-- TAB 1: OVERVIEW -->
+    <div id="tabOverview" class="tab-content active">
+
+      <!-- 6 KPI Cards (Core 3 Cards are #1, #2, #3) -->
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--card-accent: var(--primary-blue);">
+          <div class="kpi-title">
+            <span>รายได้รวม (Total Revenue)</span>
+            <span style="font-size: 1.1rem;">💰</span>
+          </div>
+          <div class="kpi-value" id="kpiTotalRevenue">฿0.00</div>
+          <div class="kpi-subtext">
+            <span>จำนวนขาย × ราคาขายต่อหน่วย</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: var(--accent-cyan);">
+          <div class="kpi-title">
+            <span>จำนวนหน่วยที่ขายรวม (Units Sold)</span>
+            <span style="font-size: 1.1rem;">📦</span>
+          </div>
+          <div class="kpi-value" id="kpiTotalQty">0 ชิ้น</div>
+          <div class="kpi-subtext">
+            <span>ปริมาณสินค้าที่จำหน่ายได้</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: var(--primary-orange);">
+          <div class="kpi-title">
+            <span>กำไรขั้นต้นรวม (Gross Profit)</span>
+            <span style="font-size: 1.1rem;">📈</span>
+          </div>
+          <div class="kpi-value" id="kpiTotalProfit">฿0.00</div>
+          <div class="kpi-subtext">
+            <span>อัตรากำไรเฉลี่ย: </span>
+            <span id="kpiGrossMarginBadge" class="kpi-badge badge-orange">0.00%</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: #6366f1;">
+          <div class="kpi-title">
+            <span>จำนวนรายการขาย (Transactions)</span>
+            <span style="font-size: 1.1rem;">🧾</span>
+          </div>
+          <div class="kpi-value" id="kpiTxCount">0 บิล</div>
+          <div class="kpi-subtext">
+            <span>รหัสรายการจำหน่ายที่บันทึก</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: #14b8a6;">
+          <div class="kpi-title">
+            <span>รายได้เฉลี่ยต่อรายการ (Ticket Size)</span>
+            <span style="font-size: 1.1rem;">🏷️</span>
+          </div>
+          <div class="kpi-value" id="kpiAvgTx">฿0.00</div>
+          <div class="kpi-subtext">
+            <span>ยอดซื้อเฉลี่ยต่อบิล</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" style="--card-accent: #ec4899;">
+          <div class="kpi-title">
+            <span>ราคาขายเฉลี่ยต่อหน่วย (Avg Price)</span>
+            <span style="font-size: 1.1rem;">💎</span>
+          </div>
+          <div class="kpi-value" id="kpiAvgPrice">฿0.00</div>
+          <div class="kpi-subtext">
+            <span>ถ่วงน้ำหนักตามจำนวนชิ้น</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Core Chart & Table Grid (Top Products Chart + Branch Revenue Table) -->
+      <div class="grid-2">
+        <!-- Top Products Bar Chart (Switchable Top 3 / 5 / 8) -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>🏆 สินค้าที่มีผลงานสูงสุด (Top Products Ranking)</span>
+              </div>
+              <div class="card-subtitle">
+                รวมยอดสินค้าเดียวกันจากทุกสาขาตามกติกา • สลับตัวชี้วัดได้
+              </div>
+            </div>
+            <div style="display: flex; gap: 4px;">
+              <button class="date-preset-btn top-rank-btn active" data-top="3" onclick="setTopRankLimit(3)">Top 3 (เริ่มต้น)</button>
+              <button class="date-preset-btn top-rank-btn" data-top="5" onclick="setTopRankLimit(5)">Top 5</button>
+              <button class="date-preset-btn top-rank-btn" data-top="8" onclick="setTopRankLimit(8)">Top 8 (ทั้งหมด)</button>
+            </div>
+          </div>
+          <div class="chart-container" id="topProductsChartContainer" style="min-height: 280px;">
+            <!-- SVG Rendered Dynamically -->
+          </div>
+        </div>
+
+        <!-- Branch Revenue Comparison Table -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>🏢 เปรียบเทียบรายได้แต่ละสาขา (Branch Breakdown)</span>
+              </div>
+              <div class="card-subtitle">
+                ตารางเปรียบเทียบสัดส่วนและผลการดำเนินงานของสาขา
+              </div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="overviewBranchTable">
+              <thead>
+                <tr>
+                  <th>สาขา</th>
+                  <th class="text-right">รายได้ (฿)</th>
+                  <th class="text-right">สัดส่วน</th>
+                  <th class="text-right">กำไรขั้นต้น (฿)</th>
+                  <th class="text-right">อัตรากำไร</th>
+                </tr>
+              </thead>
+              <tbody id="overviewBranchTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Automated Dynamic Insights -->
+      <div class="insights-card">
+        <div class="insights-header">
+          <span>🧠 ข้อสังเกตอัตโนมัติจากการประมวลผลข้อมูล (Automated Smart Insights)</span>
+        </div>
+        <div class="insights-grid" id="smartInsightsContainer">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Live Reconciliation Table (ตารางตรวจกระทบยอด) -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span>⚖️ ตารางตรวจกระทบยอดรายได้ (Revenue Reconciliation Balance Sheet)</span>
+            </div>
+            <div class="card-subtitle">
+              ตรวจสอบว่าผลรวมรายได้แยกตาม 5 มิติ (สินค้า, สาขา, หมวดหมู่, วันที่, วันในสัปดาห์) เท่ากับรายได้รวมแบบเรียลไทม์
+            </div>
+          </div>
+          <span class="badge badge-success" style="padding: 6px 12px; font-size: 0.82rem;">
+            ผลต่างที่ยอมรับได้: ฿0.00
+          </span>
+        </div>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>มิติการรวมข้อมูล (Aggregation Dimension)</th>
+                <th class="text-center">จำนวนกลุ่ม</th>
+                <th class="text-right">รายได้รวมของมิติ (฿)</th>
+                <th class="text-right">รายได้รวมเป้าหมาย (฿)</th>
+                <th class="text-right">ผลต่าง (Discrepancy)</th>
+                <th class="text-center">สถานะกระทบยอด</th>
+              </tr>
+            </thead>
+            <tbody id="reconciliationTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: BRANCHES & HEATMAP -->
+    <div id="tabBranches" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span>🏢 ผลการดำเนินงานเชิงลึกรายสาขา (Branch Performance Matrix)</span>
+            </div>
+            <div class="card-subtitle">
+              คลิกแถวเพื่อดูการแจกแจงรายสินค้าเฉพาะสาขานั้น • คลิกหัวตารางเพื่อเรียงลำดับ
+            </div>
+          </div>
+          <div id="selectedBranchIndicator" class="kpi-badge badge-blue" style="font-size: 0.85rem; padding: 6px 12px;">
+            กำลังเลือก: ทุกสาขา
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="data-table" id="fullBranchTable">
+            <thead>
+              <tr>
+                <th onclick="sortBranchTable('branch')">สาขา</th>
+                <th class="text-right" onclick="sortBranchTable('share')">สัดส่วนรายได้</th>
+                <th class="text-right" onclick="sortBranchTable('revenue')">รายได้รวม (฿)</th>
+                <th class="text-right" onclick="sortBranchTable('gross_profit')">กำไรขั้นต้น (฿)</th>
+                <th class="text-right" onclick="sortBranchTable('margin')">อัตรากำไร (%)</th>
+                <th class="text-right" onclick="sortBranchTable('qty')">จำนวนขาย (หน่วย)</th>
+                <th class="text-right" onclick="sortBranchTable('tx')">จำนวนรายการ</th>
+              </tr>
+            </thead>
+            <tbody id="fullBranchTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Drilldown: Branch Product Breakdown -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title" id="branchDrilldownTitle">
+                <span>📦 ยอดขายรายสินค้าสำหรับ: ทุกสาขา</span>
+              </div>
+              <div class="card-subtitle">
+                อันดับสินค้าในสาขาที่เลือก
+              </div>
+            </div>
+          </div>
+          <div class="chart-container" id="branchDrilldownChart" style="min-height: 280px;"></div>
+        </div>
+
+        <!-- Revenue Heatmap Matrix: Branch x Product -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>🔥 แผนที่ความร้อนรายได้: สาขา × สินค้า (Heatmap Matrix)</span>
+              </div>
+              <div class="card-subtitle">
+                ความเข้มของสีแสดงระดับรายได้ • นำเมาส์ชี้เพื่อดูรายละเอียด
+              </div>
+            </div>
+          </div>
+          <div class="table-container" id="heatmapContainer">
+            <!-- Heatmap Table Rendered Dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: PRODUCTS & ABC ANALYSIS -->
+    <div id="tabProducts" class="tab-content">
+      <!-- Separated ABC Bar Chart and Cumulative Line Chart (No overlapping lines!) -->
+      <div class="grid-2">
+        <!-- 1. Pure Bar Chart without line -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>📊 ยอดขายรายสินค้าจัดกลุ่ม ABC (Product ABC Ranking)</span>
+              </div>
+              <div class="card-subtitle">
+                จัดกลุ่มตามกติกา • สลับตัวชี้วัดได้ (ไม่มีเส้นกราฟทับ)
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <span class="badge" style="background: rgba(37, 99, 235, 0.15); color: var(--primary-blue);">กลุ่ม A (&lt;80%)</span>
+              <span class="badge" style="background: rgba(234, 88, 12, 0.15); color: var(--primary-orange);">กลุ่ม B (&lt;95%)</span>
+              <span class="badge" style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted);">กลุ่ม C</span>
+            </div>
+          </div>
+          <div class="chart-container" id="abcBarChartContainer" style="min-height: 320px;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- 2. Pure Cumulative Line Chart -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>📈 กราฟเส้นสัดส่วนสะสม (Cumulative % Curve)</span>
+              </div>
+              <div class="card-subtitle">
+                เส้นสะสม 0%–100% แยกออกมาต่างหาก ไม่ทับกับแท่งกราฟ
+              </div>
+            </div>
+          </div>
+          <div class="chart-container" id="abcLineChartContainer" style="min-height: 320px;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ABC Strategic Summary Banner -->
+      <div id="abcSummaryBanner" style="margin-top: -8px; margin-bottom: 24px; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); font-size: 0.85rem; box-shadow: var(--shadow-sm);">
+        <!-- Populated dynamically -->
+      </div>
+
+      <!-- BCG Matrix / Scatter: Units x Margin% with Bubble Size = Revenue -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>🎯 เมทริกซ์กลยุทธ์สินค้า (Scatter: จำนวนหน่วย × อัตรากำไร)</span>
+              </div>
+              <div class="card-subtitle">
+                แกน X: จำนวนหน่วย • แกน Y: อัตรากำไรขั้นต้น • ขนาดวงกลม: รายได้รวม
+              </div>
+            </div>
+          </div>
+          <div class="chart-container" id="scatterChartContainer" style="min-height: 320px;">
+            <!-- Dynamic SVG Scatter Plot -->
+          </div>
+        </div>
+
+        <!-- Full Product Performance Table -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>📋 ตารางเปรียบเทียบสินค้าทุกรายการ (Product Master Table)</span>
+              </div>
+              <div class="card-subtitle">
+                คลิกหัวคอลัมน์เพื่อเรียงลำดับ
+              </div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table" id="productMasterTable">
+              <thead>
+                <tr>
+                  <th onclick="sortProductTable('product')">สินค้า</th>
+                  <th onclick="sortProductTable('category')">หมวดหมู่</th>
+                  <th class="text-center" onclick="sortProductTable('abc')">กลุ่ม ABC</th>
+                  <th class="text-right" onclick="sortProductTable('price')">ราคา (฿)</th>
+                  <th class="text-right" onclick="sortProductTable('cost')">ต้นทุน (฿)</th>
+                  <th class="text-right" onclick="sortProductTable('qty')">ขาย (ชิ้น)</th>
+                  <th class="text-right" onclick="sortProductTable('revenue')">รายได้ (฿)</th>
+                  <th class="text-right" onclick="sortProductTable('gross_profit')">กำไร (฿)</th>
+                  <th class="text-right" onclick="sortProductTable('margin')">มาร์จิ้น</th>
+                </tr>
+              </thead>
+              <tbody id="productMasterTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: TIME TRENDS & CALENDAR -->
+    <div id="tabTrends" class="tab-content">
+      <!-- Cumulative Daily Revenue Area Chart -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span>📈 แนวโน้มรายได้สะสมรายวัน (Cumulative Daily Revenue Curve)</span>
+            </div>
+            <div class="card-subtitle">
+              เส้นสะสมรายได้ตลอดเดือนสิงหาคม 2569 (วันที่ 1–31 ส.ค.)
+            </div>
+          </div>
+        </div>
+        <div class="chart-container" id="cumulativeTrendChart" style="min-height: 280px;">
+          <!-- Dynamic SVG Trend Area -->
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Day-of-Week Revenue Bar Chart -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>📅 ผลประกอบการแยกตามวันในสัปดาห์ (Day of Week Analysis)</span>
+              </div>
+              <div class="card-subtitle">
+                เปรียบเทียบยอดขายวันจันทร์ ถึง วันอาทิตย์ พร้อมเส้นค่าเฉลี่ย
+              </div>
+            </div>
+          </div>
+          <div class="chart-container" id="dowChartContainer" style="min-height: 280px;">
+            <!-- Dynamic SVG DOW Bar -->
+          </div>
+        </div>
+
+        <!-- Daily Calendar Heatmap -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span>🗓️ ปฏิทินความร้อนรายวัน (August 2026 Daily Heatmap)</span>
+              </div>
+              <div class="card-subtitle">
+                คลิกที่วันที่เพื่อกรองดูยอดเฉพาะวันนั้น
+              </div>
+            </div>
+          </div>
+          <div class="calendar-wrapper">
+            <div class="calendar-days-header">
+              <div>จันทร์</div>
+              <div>อังคาร</div>
+              <div>พุธ</div>
+              <div>พฤหัส</div>
+              <div>ศุกร์</div>
+              <div>เสาร์</div>
+              <div>อาทิตย์</div>
+            </div>
+            <div class="calendar-grid" id="calendarGridContainer">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: TRANSACTIONS LOG -->
+    <div id="tabTransactions" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span>📑 บันทึกรายการขายทั้งหมด (All Sales Transactions)</span>
+            </div>
+            <div class="card-subtitle">
+              ค้นหา เรียงลำดับ แบ่งหน้า และดาวน์โหลดไฟล์ CSV ตามตัวกรองปัจจุบัน
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn btn-orange btn-sm" onclick="exportFilteredCSV()">
+              📥 ดาวน์โหลด CSV ตามตัวกรอง
+            </button>
+          </div>
+        </div>
+
+        <!-- Table controls (Search + Items per page) -->
+        <div class="table-controls">
+          <div class="search-box">
+            <input type="text" id="txSearchInput" placeholder="ค้นหารหัส, สินค้า, สาขา, หมวดหมู่..." oninput="handleTxSearch()">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+            <span>แสดงแถวต่อหน้า:</span>
+            <select id="txPageSizeSelect" onchange="changePageSize(this.value)" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 4px 8px; border-radius: 4px;">
+              <option value="10">10 แถว</option>
+              <option value="25" selected>25 แถว</option>
+              <option value="50">50 แถว</option>
+              <option value="100">ทั้งหมด (100 แถว)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="table-container">
+          <table class="data-table" id="txTable">
+            <thead>
+              <tr>
+                <th onclick="sortTxTable('id')">รหัสรายการ</th>
+                <th onclick="sortTxTable('date')">วันที่</th>
+                <th onclick="sortTxTable('day_of_week')">วันในสัปดาห์</th>
+                <th onclick="sortTxTable('branch')">สาขา</th>
+                <th onclick="sortTxTable('product')">สินค้า</th>
+                <th onclick="sortTxTable('category')">หมวดหมู่</th>
+                <th class="text-right" onclick="sortTxTable('qty')">จำนวนขาย</th>
+                <th class="text-right" onclick="sortTxTable('price')">ราคา/หน่วย</th>
+                <th class="text-right" onclick="sortTxTable('cost')">ต้นทุน/หน่วย</th>
+                <th class="text-right" onclick="sortTxTable('revenue')">รายได้ (฿)</th>
+                <th class="text-right" onclick="sortTxTable('gross_profit')">กำไรขั้นต้น (฿)</th>
+                <th class="text-right" onclick="sortTxTable('margin')">อัตรากำไร</th>
+                <th>กลุ่มข้อมูล (Batch)</th>
+                <th class="text-center" style="width: 60px;">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="txTableBody"></tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="pagination-bar">
+          <div id="txPaginationInfo">กำลังแสดง 1-25 จาก 100 รายการ</div>
+          <div class="page-nav" id="txPageNav"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: DATA MANAGEMENT & BATCH CONTROL -->
+    <div id="tabDataManager" class="tab-content">
+      
+      <!-- Back Navigation Bar -->
+      <div class="dm-back-bar">
+        <button class="btn btn-back-dashboard btn-sm" onclick="goBackFromDataManager()" title="ย้อนกลับไปหน้าแดชบอร์ด">
+          <span>⬅️ ย้อนกลับไปหน้าแดชบอร์ด (Back to Dashboard)</span>
+        </button>
+        <span class="dm-back-hint">
+          💡 สามารถกดปุ่มนี้ หรือคลิกเลือกแท็บเมนูด้านบน (ภาพรวม, สาขา, สินค้า, มิติเวลา, รายการขาย) เพื่อกลับสู่หน้าวิเคราะห์ได้ตลอดเวลา
+        </span>
+      </div>
+
+      <!-- Hero Banner -->
+      <div class="dm-hero-banner">
+        <div class="dm-hero-text">
+          <div style="font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span>📁 ระบบนำเข้าและบริหารจัดการชุดข้อมูล (Sales Data & Batch Manager)</span>
+            <span class="badge" style="background: rgba(255,255,255,0.22); color: #fff;">Multi-Batch & Pruner</span>
+          </div>
+          <p style="margin-top: 6px; font-size: 0.84rem; opacity: 0.94; line-height: 1.5;">
+            รองรับการนำเข้าข้อมูลการขายใหม่ในอนาคต (รายวัน/รายเดือน/รายปี) โดยระบบจะแยกเป็นกลุ่มชุดข้อมูล (Batches) พร้อมบันทึกวันเวลาที่นำเข้า
+            และสามารถตัดลบข้อมูลเก่าเพื่อลดการสะสมข้อมูลที่มากเกินไปได้ทั้ง<strong>ลบยกเลิกทั้งกลุ่มไฟล์</strong>, <strong>ตัดลบข้อมูลรายปี</strong> หรือ<strong>เลือกติ๊กลบเฉพาะบางแถว</strong>
+          </p>
+        </div>
+        <div class="dm-hero-actions">
+          <button class="btn btn-sm" style="background: #ffffff; color: var(--primary-blue); font-weight: 700; border: none; box-shadow: var(--shadow-sm);" onclick="goBackFromDataManager()">
+            ⬅️ กลับหน้าแดชบอร์ด
+          </button>
+          <button class="btn btn-outline btn-sm" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.35);" onclick="downloadSampleTemplate('csv')">
+            📄 โหลดแม่แบบ CSV
+          </button>
+          <button class="btn btn-outline btn-sm" style="background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.35);" onclick="downloadSampleTemplate('json')">
+            📄 โหลดแม่แบบ JSON
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Summary -->
+      <div class="dm-stats-grid">
+        <div class="dm-stat-card">
+          <div class="dm-stat-title">จำนวนรายการทั้งหมดในระบบ</div>
+          <div class="dm-stat-val" id="dmTotalRecords" style="color: var(--primary-blue);">100 แถว</div>
+          <div class="dm-stat-sub" id="dmRecordSub">ชีต Sales และชุดที่นำเข้า</div>
+        </div>
+        <div class="dm-stat-card">
+          <div class="dm-stat-title">กลุ่ม/ชุดข้อมูลที่เปิดใช้งาน</div>
+          <div class="dm-stat-val" id="dmTotalBatches" style="color: var(--primary-orange);">1 ชุด</div>
+          <div class="dm-stat-sub" id="dmBatchSub">ชุดข้อมูลเริ่มต้น</div>
+        </div>
+        <div class="dm-stat-card">
+          <div class="dm-stat-title">ช่วงปีและเวลาข้อมูลในระบบ</div>
+          <div class="dm-stat-val" id="dmYearRange" style="color: var(--accent-emerald);">2026 (พ.ศ. 2569)</div>
+          <div class="dm-stat-sub" id="dmDateRangeSub">1 ส.ค. 2569 – 31 ส.ค. 2569</div>
+        </div>
+        <div class="dm-stat-card">
+          <div class="dm-stat-title">หน่วยความจำในเครื่อง (Browser Storage)</div>
+          <div class="dm-stat-val" id="dmStorageUsed" style="color: var(--accent-cyan);">~45 KB</div>
+          <div class="dm-stat-sub">บันทึกข้อมูลใน LocalStorage อัตโนมัติ</div>
+        </div>
+      </div>
+
+      <!-- Section: Yearly Pruning & Clean-up ("ลดการสะสมข้อมูลเยอะเกินไปของแต่ละปีเป็นต้น") -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+              <span>🗓️ จัดการและตัดลดข้อมูลตามปี (Year-based Pruning & Archive)</span>
+            </div>
+            <div class="card-subtitle">
+              ตรวจสอบปริมาณข้อมูลแยกตามปี และสามารถตัดล้างข้อมูลของปีเก่าเพื่อลดการสะสมข้อมูลที่มากเกินไปได้ทันที
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="dmYearPruneContainer" class="dm-year-grid">
+            <!-- Dynamic year cards rendered via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Upload & Import Studio ("อัพโหลดข้อมูลใหม่ เช่นข้อมูลในอนาคต") -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+          <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+            <span>📤 นำเข้าข้อมูลการขายใหม่ (Import Future / New Sales Data)</span>
+          </div>
+          <div class="card-subtitle">
+            รองรับไฟล์ CSV (Export จาก Excel), JSON, TSV หรือสามารถ Copy ตารางจากโปรแกรม Excel มากดวางได้โดยตรง
+          </div>
+        </div>
+        <div class="card-body">
+          
+          <!-- Mode switcher: File Upload vs Direct Paste from Excel -->
+          <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+            <button class="btn btn-sm btn-primary" id="dmTabUploadFile" onclick="setImportInputMode('file')">
+              📁 อัปโหลดไฟล์ (CSV / JSON)
+            </button>
+            <button class="btn btn-sm btn-outline" id="dmTabPasteText" onclick="setImportInputMode('paste')">
+              📋 คัดลอกตารางจาก Excel มาวางโดยตรง
+            </button>
+          </div>
+
+          <!-- File Upload Dropzone -->
+          <div id="dmUploadFileArea">
+            <div class="dm-dropzone" id="dmDropZone" onclick="document.getElementById('dmFileInput').click()">
+              <input type="file" id="dmFileInput" accept=".csv,.json,.tsv,.txt" style="display: none;" onchange="handleFileSelect(event)">
+              <div style="font-size: 2.2rem; margin-bottom: 8px;">📂</div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">
+                คลิกเพื่อเลือกไฟล์ หรือลากไฟล์มาวางที่นี่
+              </div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                รองรับไฟล์ <strong>.CSV</strong> (UTF-8 / TIS-620), <strong>.JSON</strong>, <strong>.TSV</strong>
+              </div>
+              <div style="margin-top: 10px;">
+                <span class="badge" style="background: var(--primary-blue-light); color: var(--primary-blue);">ตรวจจับคอลัมน์ภาษาไทยและอังกฤษอัตโนมัติ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Direct Paste Textarea -->
+          <div id="dmPasteTextArea" style="display: none;">
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 6px;">
+              💡 <em>วิธีใช้:</em> เปิดไฟล์ Excel -> คลุมดำแถวข้อมูลที่ต้องการ (รวมหัวตาราง) -> กด <code>Ctrl+C</code> -> คลิกในกล่องด้านล่างแล้วกด <code>Ctrl+V</code>
+            </div>
+            <textarea id="dmPasteInput" class="dm-paste-input" placeholder="วางข้อมูลจาก Excel (Header + Rows) ที่นี่..." rows="6" oninput="handlePasteInput()"></textarea>
+          </div>
+
+          <!-- Import Configuration Options -->
+          <div class="dm-import-options">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 16px;">
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--text-main);">
+                  🏷️ ตั้งชื่อกลุ่ม/ชุดข้อมูลนี้ (Batch Name):
+                </label>
+                <input type="text" id="dmBatchNameInput" class="dm-text-input" placeholder="เช่น ยอดขาย ก.ย. 2569 หรือเว้นว่างให้ใช้ชื่อไฟล์">
+              </div>
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--text-main);">
+                  ⚙️ รูปแบบการนำเข้า (Import Mode):
+                </label>
+                <div style="display: flex; gap: 14px; align-items: center; padding-top: 6px;">
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer;">
+                    <input type="radio" name="dmImportMode" value="append" checked>
+                    <span>➕ เพิ่มต่อท้ายข้อมูลเดิม (Append)</span>
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; cursor: pointer; color: var(--accent-rose);">
+                    <input type="radio" name="dmImportMode" value="replace">
+                    <span>🔄 ล้างและแทนที่ทั้งหมด (Replace)</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview & Validation Box (hidden initially) -->
+          <div id="dmPreviewBox" style="display: none; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+            <div id="dmValidationStatus"></div>
+            
+            <div style="font-weight: 700; font-size: 0.88rem; margin: 12px 0 6px 0; color: var(--text-main);">
+              👀 ตัวอย่างข้อมูล 5 แถวแรกที่ระบบอ่านได้:
+            </div>
+            <div class="table-container" style="max-height: 220px;">
+              <table class="data-table" style="font-size: 0.8rem;">
+                <thead>
+                  <tr>
+                    <th>รหัส</th>
+                    <th>วันที่</th>
+                    <th>วันในสัปดาห์</th>
+                    <th>สาขา</th>
+                    <th>สินค้า</th>
+                    <th>หมวดหมู่</th>
+                    <th class="text-right">จำนวน</th>
+                    <th class="text-right">ราคา</th>
+                    <th class="text-right">ต้นทุน</th>
+                    <th class="text-right">รายได้ (คำนวณ)</th>
+                    <th class="text-right">กำไร (คำนวณ)</th>
+                  </tr>
+                </thead>
+                <tbody id="dmPreviewTableBody"></tbody>
+              </table>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+              <button class="btn btn-outline btn-sm" onclick="cancelImportPreview()">ยกเลิก</button>
+              <button class="btn btn-primary btn-sm" id="btnConfirmImport" onclick="confirmImport()">
+                🚀 ยืนยันบันทึกและนำเข้าข้อมูลเข้าสู่ระบบ
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Section: Batches History & Group Deletion ("แบ่งว่าอันนี้เข้ามาตอนไหนแบ่งเป็นกลุ่ม และลบทั้งไฟล์กลุ่ม") -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+              <span>📦 ประวัติกลุ่มชุดข้อมูลที่นำเข้า (Import Batches & Data Sources)</span>
+            </div>
+            <div class="card-subtitle">
+              ดูรายการชุดข้อมูลที่นำเข้ามาทั้งหมด เวลาที่นำเข้า และสามารถกดลบทั้งไฟล์/กลุ่มที่นำเข้ามาได้ทันที
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-container">
+            <table class="data-table" id="dmBatchesTable">
+              <thead>
+                <tr>
+                  <th>ชื่อชุดข้อมูล (Batch Name)</th>
+                  <th>เวลาที่นำเข้า (Timestamp)</th>
+                  <th>แหล่งที่มา / ไฟล์</th>
+                  <th>ช่วงวันที่</th>
+                  <th>ปี</th>
+                  <th class="text-right">จำนวนรายการ</th>
+                  <th class="text-right">ยอดขายรวม</th>
+                  <th class="text-center">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="dmBatchesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Detailed Record Pruner ("หรือลบแค่บางอัน") -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+              <span>📑 ตัดลบข้อมูลรายแถวแบบละเอียด (Individual & Bulk Record Pruner)</span>
+            </div>
+            <div class="card-subtitle">
+              ค้นหาและติ๊กเลือกแถวข้อมูลที่ต้องการลบเพื่อคลีนข้อมูลที่ไม่ต้องการ หรือคลิกลบทีละแถว
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn btn-danger btn-sm" id="btnBulkDelete" onclick="deleteSelectedPruneRows()" style="display: none;">
+              🗑️ ลบที่เลือก (<span id="dmSelectedCount">0</span> แถว)
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          
+          <!-- Filters for Pruner -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 12px;">
+            <div>
+              <input type="text" id="dmPruneSearch" class="dm-text-input" placeholder="ค้นหารหัส, สินค้า, สาขา..." oninput="renderPruneTable()">
+            </div>
+            <div>
+              <select id="dmPruneBatchFilter" class="dm-select-input" onchange="renderPruneTable()">
+                <option value="all">ทุกกลุ่มชุดข้อมูล (All Batches)</option>
+              </select>
+            </div>
+            <div>
+              <select id="dmPruneYearFilter" class="dm-select-input" onchange="renderPruneTable()">
+                <option value="all">ทุกปี (All Years)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="dmPruneTable">
+              <thead>
+                <tr>
+                  <th style="width: 36px; text-align: center;">
+                    <input type="checkbox" id="dmSelectAllRows" onchange="toggleSelectAllPrune(this.checked)">
+                  </th>
+                  <th>รหัส</th>
+                  <th>วันที่</th>
+                  <th>สาขา</th>
+                  <th>สินค้า</th>
+                  <th>หมวดหมู่</th>
+                  <th class="text-right">จำนวน</th>
+                  <th class="text-right">ราคา</th>
+                  <th class="text-right">รายได้</th>
+                  <th>กลุ่มนำเข้า (Batch)</th>
+                  <th class="text-center">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="dmPruneTableBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Prune Pagination -->
+          <div class="pagination-bar" style="margin-top: 10px;">
+            <div id="dmPrunePaginationInfo">กำลังแสดง 1-25 จาก 100 รายการ</div>
+            <div class="page-nav" id="dmPrunePageNav"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Factory Reset & Clean Zone -->
+      <div class="card" style="border-color: rgba(225, 29, 72, 0.35); background: rgba(225, 29, 72, 0.02);">
+        <div class="card-header">
+          <div class="card-title" style="color: var(--accent-rose); display: flex; align-items: center; gap: 8px;">
+            <span>⚠️ โซนรีเซ็ตและกู้คืนระบบ (Factory Reset & Recovery)</span>
+          </div>
+          <div class="card-subtitle">
+            ต้องการเริ่มต้นใหม่ สามารถกู้คืนข้อมูลเดิม 100 รายการจากชีต Sales หรือล้างฐานข้อมูลในเบราว์เซอร์ได้ที่นี่
+          </div>
+        </div>
+        <div class="card-body" style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn btn-outline btn-sm" onclick="restoreInitialSeedData()">
+            ↺ กู้คืนเป็นข้อมูลเริ่มต้นของระบบ (100 รายการชีต Sales)
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="clearAllDataPrompt()">
+            🗑️ ล้างฐานข้อมูลทั้งหมดในระบบ (Clear All Data)
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Return Bar -->
+      <div style="text-align: center; margin: 26px 0 16px 0; padding: 18px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+        <button class="btn btn-primary" onclick="goBackFromDataManager()" style="padding: 10px 28px; font-size: 0.95rem; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+          <span>⬅️ เสร็จสิ้นและย้อนกลับไปหน้าแดชบอร์ด (Return to Dashboard)</span>
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Tooltip Element for SVG charts -->
+  <div class="chart-tooltip" id="globalTooltip"></div>
+
+  <!-- Data Quality Audit Modal -->
+  <div class="modal-overlay" id="auditModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="font-weight: 700; font-size: 1.15rem; color: var(--primary-blue); display: flex; align-items: center; gap: 8px;">
+          <span>🛡️ รายงานการตรวจสอบคุณภาพข้อมูล (Data Quality Audit Report)</span>
+        </div>
+        <button class="modal-close" onclick="closeAuditModal()">&times;</button>
+      </div>
+      <div>
+        <div style="background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.3); border-radius: var(--radius-md); padding: 14px; margin-bottom: 18px; color: var(--accent-emerald); font-weight: 600; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.4rem;">✔</span>
+          <span>ผ่านเกณฑ์การตรวจสอบข้อมูลทั้งหมด 100% ข้อมูลมีความถูกต้อง สะอาด พร้อมนำไปประมวลผล</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.88rem;">
+          <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px;">
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 4px;">1. การตรวจค่าว่าง (Null / Empty Rows Check)</div>
+            <div style="color: var(--text-muted);">
+              • ตรวจพบแถวว่างทั้งหมด <strong>899 แถว</strong> ในชีต Sales (จากแถวที่ 102 ถึง 1000 ที่เป็นพื้นที่ว่างในไฟล์ Excel)<br>
+              • ใน <strong>100 แถวข้อมูลจริง (แถวที่ 2 ถึง 101)</strong> ไม่พบค่าว่างในคอลัมน์ใดเลย (Complete 100%)
+            </div>
+          </div>
+
+          <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px;">
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 4px;">2. การตรวจรหัสรายการซ้ำ (Duplicate Transaction IDs Check)</div>
+            <div style="color: var(--text-muted);">
+              • ตรวจสอบคอลัมน์ รหัสรายการ พบรหัสตั้งแต่ S001 ถึง S100 รวม 100 รายการ<br>
+              • ค่าไม่ซ้ำกัน (Unique): <strong>100 / 100 รายการ</strong> (ไม่พบรหัสซ้ำ 0 รายการ)
+            </div>
+          </div>
+
+          <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px;">
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 4px;">3. การตรวจความสอดคล้องและการสะกดคำ (Spelling & Whitespace Consistency)</div>
+            <div style="color: var(--text-muted);">
+              • <strong>สาขา (3 แห่ง):</strong> มหาวิทยาลัย, สำนักงาน, ห้างสรรพสินค้า (สะกดตรงกัน 100% ไม่มีวรรคหน้า/หลัง)<br>
+              • <strong>หมวดหมู่ (3 หมวด):</strong> กาแฟ, เบเกอรี, เครื่องดื่มอื่น (ตรงตามมาตรฐานทุกรายการ)<br>
+              • <strong>สินค้า (8 รายการ):</strong> ครัวซองต์, คาปูชิโน, ชาไทย, ชีสเค้ก, บราวนี, ลาเต้, อเมริกาโน, โกโก้ (ไม่มีคำสะกดผิด)
+            </div>
+          </div>
+
+          <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px;">
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 4px;">4. การตรวจตัวเลขที่เก็บเป็นข้อความ (Data Types Check)</div>
+            <div style="color: var(--text-muted);">
+              • คอลัมน์ จำนวนขาย, ราคาขายต่อหน่วย, ต้นทุนต่อหน่วย ถูกจัดเก็บเป็นตัวเลขทั้งหมด (Numeric)<br>
+              • ไม่พบตัวเลขที่ถูกแปลงเป็นสตริงหรือมีสัญลักษณ์แปลกปลอม
+            </div>
+          </div>
+
+          <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px 16px;">
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 4px;">5. สรุปกติกาการคำนวณที่ใช้ในระบบ (Formulas Applied)</div>
+            <div style="color: var(--text-muted);">
+              • รายได้ = จำนวนขาย × ราคาขายต่อหน่วย<br>
+              • กำไรขั้นต้น = จำนวนขาย × (ราคาขายต่อหน่วย − ต้นทุนต่อหน่วย)<br>
+              • อัตรากำไรขั้นต้น = กำไรขั้นต้น ÷ รายได้<br>
+              • รวมข้อมูลสินค้าเดียวกันจากทุกสาขาก่อนการจัดอันดับและวิเคราะห์ ABC
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 20px;">
+          <button class="btn btn-primary" onclick="closeAuditModal()">รับทราบและปิดหน้ารายงาน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-highlight">⚠️ ข้อมูลจำลองเพื่อการเรียนรู้ (Simulated Data for Educational Purpose)</div>
+      <p>พัฒนาสำหรับ Amazon Quick Workshop • ประมวลผลจากชีต Sales ในไฟล์ Excel ต้นฉบับ</p>
+      <p style="font-size: 0.78rem; margin-top: 6px; color: var(--text-subtle);">
+        สถาปัตยกรรม Single-File HTML • แสดงผลด้วย Custom Scalable Vector Graphics (SVG) โดยไม่พึ่งพาไลบรารีภายนอก
+      </p>
+    </div>
+  </footer>
+
+  <!-- Embedded Raw Dataset & Application Logic -->
+  <script src="app.js?v=8"></script>
+</body>
+</html>
